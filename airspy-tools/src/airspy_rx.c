@@ -1,6 +1,7 @@
 /*
  * Copyright 2012 Jared Boone <jared@sharebrained.com>
  * Copyright 2014-2015 Benjamin Vernoux <bvernoux@airspy.com>
+ * Copyright (C) 2019, Yoshihiro Nakagawa <yoshihiro.nakagawa@warpspace.jp>
  *
  * This file is part of AirSpy (based on HackRF project).
  *
@@ -1056,7 +1057,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	/*
+#ifdef airspy_low_power_cpu_mode
 	fprintf(stderr, "Reading samples in async mode...\n");
 	r = rtlsdr_read_async(dev, rtlsdr_callback, (void *)file, 0, out_block_size);
 
@@ -1068,8 +1069,8 @@ int main(int argc, char** argv)
 	{
 		fprintf(stderr, "\nLibrary error %d, exiting...\n", r);
 	}
-	*/
 
+#else
 	result = airspy_start_rx(device, rx_callback, NULL);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
@@ -1104,7 +1105,8 @@ int main(int argc, char** argv)
 	} else {
 		fprintf(stderr, "\nExiting...\n");
 	}
-	
+#endif
+
 	gettimeofday(&t_end, NULL);
 	time_diff = TimevalDiff(&t_end, &t_start);
 	fprintf(stderr, "Total time: %5.4f s\n", time_diff);
@@ -1112,20 +1114,28 @@ int main(int argc, char** argv)
 	{
 		fprintf(stderr, "Average speed %2.4f MSPS %s\n", (global_average_rate * 1e-6f / rate_samples), (wav_nb_channels == 2 ? "IQ" : "Real"));
 	}
-	
+
+#ifndef airspy_low_power_cpu_mode
 	if(device != NULL)
 	{
 		result = airspy_stop_rx(device);
 		if( result != AIRSPY_SUCCESS ) {
 			fprintf(stderr, "airspy_stop_rx() failed: %s (%d)\n", airspy_error_name(result), result);
 		}
+	}
+#endif
 
+	if(device != NULL)
+	{
 		result = airspy_close(device);
 		if( result != AIRSPY_SUCCESS ) 
 		{
 			fprintf(stderr, "airspy_close() failed: %s (%d)\n", airspy_error_name(result), result);
 		}
-		
+	}
+
+	if(device != NULL)
+	{	
 		airspy_exit();
 	}
 	// konohenmade wo need to modify

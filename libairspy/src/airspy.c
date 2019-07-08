@@ -4,6 +4,7 @@ Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
 Copyright (c) 2014, Youssef Touil <youssef@airspy.com>
 Copyright (c) 2014, Benjamin Vernoux <bvernoux@airspy.com>
 Copyright (c) 2015, Ian Gilmour <ian@sdrsharp.com>
+Copyright (C) 2019, Yoshihiro Nakagawa <yoshihiro.nakagawa@warpspace.jp>
 
 All rights reserved.
 

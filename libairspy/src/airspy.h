@@ -3,6 +3,7 @@ Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
 Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
 Copyright (c) 2013-2016, Benjamin Vernoux <bvernoux@airspy.com>
 Copyright (C) 2013-2016, Youssef Touil <youssef@airspy.com>
+Copyright (C) 2019, Yoshihiro Nakagawa <yoshihiro.nakagawa@warpspace.jp>
 
 All rights reserved.
 
