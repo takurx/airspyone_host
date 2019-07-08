@@ -516,6 +516,32 @@ void sigint_callback_handler(int signum)
 #define PATH_FILE_MAX_LEN (FILENAME_MAX)
 #define DATE_TIME_MAX_LEN (32)
 
+//static int do_exit = 0;
+static uint32_t bytes_to_read = 0;
+static rtlsdr_dev_t *dev = NULL;
+
+static void rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
+{
+	if (ctx) {
+		if (do_exit)
+			return;
+
+		if ((bytes_to_read > 0) && (bytes_to_read < len)) {
+			len = bytes_to_read;
+			do_exit = 1;
+			rtlsdr_cancel_async(dev);
+		}
+
+		if (fwrite(buf, 1, len, (FILE*)ctx) != len) {
+			fprintf(stderr, "Short write, samples lost, exiting!\n");
+			rtlsdr_cancel_async(dev);
+		}
+
+		if (bytes_to_read > 0)
+			bytes_to_read -= len;
+	}
+}
+
 int main(int argc, char** argv)
 {
 	int opt;
