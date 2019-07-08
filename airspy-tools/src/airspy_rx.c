@@ -254,8 +254,11 @@ uint32_t biast_val;
 bool serial_number = false;
 uint64_t serial_number_val;
 
-static float
-TimevalDiff(const struct timeval *a, const struct timeval *b)
+#define DEFAULT_BUF_LENGTH		(16 * 16384)
+uint32_t out_block_size = DEFAULT_BUF_LENGTH;
+#define AIRSPY_LOW_POWER_CPU_MODE 0
+
+static float TimevalDiff(const struct timeval *a, const struct timeval *b)
 {
 	return (a->tv_sec - b->tv_sec) + 1e-6f * (a->tv_usec - b->tv_usec);
 }
@@ -1057,7 +1060,7 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-#ifdef airspy_low_power_cpu_mode
+#ifdef AIRSPY_LOW_POWER_CPU_MODE
 	fprintf(stderr, "Reading samples in async mode...\n");
 	r = airspy_read_async(dev, airspy_callback, (void *)file, 0, out_block_size);
 
@@ -1115,7 +1118,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Average speed %2.4f MSPS %s\n", (global_average_rate * 1e-6f / rate_samples), (wav_nb_channels == 2 ? "IQ" : "Real"));
 	}
 
-#ifndef airspy_low_power_cpu_mode
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 	if(device != NULL)
 	{
 		result = airspy_stop_rx(device);
