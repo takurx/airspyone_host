@@ -256,7 +256,7 @@ uint64_t serial_number_val;
 
 #define DEFAULT_BUF_LENGTH		(16 * 16384)
 uint32_t out_block_size = DEFAULT_BUF_LENGTH;
-#define AIRSPY_LOW_POWER_CPU_MODE 0
+#define AIRSPY_LOW_POWER_CPU_MODE 1
 
 static float TimevalDiff(const struct timeval *a, const struct timeval *b)
 {
@@ -1062,7 +1062,7 @@ int main(int argc, char** argv)
 
 #ifdef AIRSPY_LOW_POWER_CPU_MODE
 	fprintf(stderr, "Reading samples in async mode...\n");
-	r = airspy_read_async(dev, airspy_callback, (void *)file, 0, out_block_size);
+	result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
 
 	if (do_exit)
 	{
@@ -1070,7 +1070,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		fprintf(stderr, "\nLibrary error %d, exiting...\n", r);
+		fprintf(stderr, "\nLibrary error %d, exiting...\n", result);
 	}
 
 #else

@@ -37,9 +37,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "filters.h"
 
 enum airspy_async_status {
-	RTLSDR_INACTIVE = 0,
-	RTLSDR_CANCELING,
-	RTLSDR_RUNNING
+	AIRSPY_INACTIVE = 0,
+	AIRSPY_CANCELING,
+	AIRSPY_RUNNING
 };
 
 #define DEFAULT_BUF_NUMBER	15
@@ -1984,16 +1984,16 @@ int airspy_cancel_async(airspy_dev_t *dev)
 		return -1;
 
 	/* if streaming, try to cancel gracefully */
-	if (RTLSDR_RUNNING == dev->async_status) {
-		dev->async_status = RTLSDR_CANCELING;
+	if (AIRSPY_RUNNING == dev->async_status) {
+		dev->async_status = AIRSPY_CANCELING;
 		dev->async_cancel = 1;
 		return 0;
 	}
 
 	/* if called while in pending state, change the state forcefully */
 #if 0
-	if (RTLSDR_INACTIVE != dev->async_status) {
-		dev->async_status = RTLSDR_INACTIVE;
+	if (AIRSPY_INACTIVE != dev->async_status) {
+		dev->async_status = AIRSPY_INACTIVE;
 		return 0;
 	}
 #endif
@@ -2035,15 +2035,15 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 	int r = 0;
 	struct timeval tv = { 1, 0 };
 	struct timeval zerotv = { 0, 0 };
-	enum airspy_async_status next_status = RTLSDR_INACTIVE;
+	enum airspy_async_status next_status = AIRSPY_INACTIVE;
 
 	if (!dev)
 		return -1;
 
-	if (RTLSDR_INACTIVE != dev->async_status)
+	if (AIRSPY_INACTIVE != dev->async_status)
 		return -2;
 
-	dev->async_status = RTLSDR_RUNNING;
+	dev->async_status = AIRSPY_RUNNING;
 	dev->async_cancel = 0;
 
 	dev->cb = cb;
@@ -2074,12 +2074,12 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 		r = libusb_submit_transfer(dev->xfer[i]);
 		if (r < 0) {
 			fprintf(stderr, "Failed to submit transfer %i!\n", i);
-			dev->async_status = RTLSDR_CANCELING;
+			dev->async_status = AIRSPY_CANCELING;
 			break;
 		}
 	}
 
-	while (RTLSDR_INACTIVE != dev->async_status) {
+	while (AIRSPY_INACTIVE != dev->async_status) {
 		r = libusb_handle_events_timeout_completed(dev->ctx, &tv,
 							   &dev->async_cancel);
 		if (r < 0) {
@@ -2089,8 +2089,8 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 			break;
 		}
 
-		if (RTLSDR_CANCELING == dev->async_status) {
-			next_status = RTLSDR_INACTIVE;
+		if (AIRSPY_CANCELING == dev->async_status) {
+			next_status = AIRSPY_INACTIVE;
 
 			if (!dev->xfer)
 				break;
@@ -2110,11 +2110,11 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 					if (r < 0)
 						continue;
 
-					next_status = RTLSDR_CANCELING;
+					next_status = AIRSPY_CANCELING;
 				}
 			}
 
-			if (dev->dev_lost || RTLSDR_INACTIVE == next_status) {
+			if (dev->dev_lost || AIRSPY_INACTIVE == next_status) {
 				/* handle any events that still need to
 				 * be handled before exiting after we
 				 * just cancelled all transfers */
