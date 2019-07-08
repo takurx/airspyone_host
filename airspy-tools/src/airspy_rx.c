@@ -20,7 +20,7 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include <airspy.h>
+//#include <airspy.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
+
+#include "airspy_rx.h"
 
 #define AIRSPY_RX_VERSION "1.0.5 23 April 2016"
 
@@ -1020,6 +1022,14 @@ int main(int argc, char** argv)
 	}
 
 	// konohenkara wo need to modify
+	result = airspy_set_freq(device, freq_hz);
+	if( result != AIRSPY_SUCCESS ) {
+		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n", airspy_error_name(result), result);
+		airspy_close(device);
+		airspy_exit();
+		return EXIT_FAILURE;
+	}
+
 	/*
 	fprintf(stderr, "Reading samples in async mode...\n");
 	r = rtlsdr_read_async(dev, rtlsdr_callback, (void *)file, 0, out_block_size);
@@ -1034,14 +1044,6 @@ int main(int argc, char** argv)
 	}
 	*/
 
-	result = airspy_set_freq(device, freq_hz);
-	if( result != AIRSPY_SUCCESS ) {
-		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n", airspy_error_name(result), result);
-		airspy_close(device);
-		airspy_exit();
-		return EXIT_FAILURE;
-	}
-	
 	result = airspy_start_rx(device, rx_callback, NULL);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);

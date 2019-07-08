@@ -30,9 +30,20 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <pthread.h>
 
 #include "airspy.h"
+#include "../../airspy-tools/src/airspy_rx.h"
 #include "iqconverter_float.h"
 #include "iqconverter_int16.h"
 #include "filters.h"
+
+enum rtlsdr_async_status {
+	RTLSDR_INACTIVE = 0,
+	RTLSDR_CANCELING,
+	RTLSDR_RUNNING
+};
+
+#define DEFAULT_BUF_NUMBER	15
+#define DEFAULT_BUF_LENGTH	(16 * 32 * 512)
+#define BULK_TIMEOUT	0
 
 #ifndef bool
 typedef int bool;
@@ -98,6 +109,40 @@ typedef struct airspy_device
 	void* ctx;
 	enum airspy_sample_type sample_type;
 } airspy_device_t;
+
+struct rtlsdr_dev {
+	libusb_context *ctx;
+	struct libusb_device_handle *devh;
+	uint32_t xfer_buf_num;
+	uint32_t xfer_buf_len;
+	struct libusb_transfer **xfer;
+	unsigned char **xfer_buf;
+	rtlsdr_read_async_cb_t cb;
+	void *cb_ctx;
+	enum rtlsdr_async_status async_status;
+	int async_cancel;
+	/* rtl demod context */
+	uint32_t rate; /* Hz */
+	uint32_t rtl_xtal; /* Hz */
+	//int fir[FIR_LEN];
+	int direct_sampling;
+	/* tuner context */
+	//enum rtlsdr_tuner tuner_type;
+	//rtlsdr_tuner_iface_t *tuner;
+	uint32_t tun_xtal; /* Hz */
+	uint32_t freq; /* Hz */
+	uint32_t bw;
+	uint32_t offs_freq; /* Hz */
+	int corr; /* ppm */
+	int gain; /* tenth dB */
+	//struct e4k_state e4k_s;
+	//struct r82xx_config r82xx_c;
+	//struct r82xx_priv r82xx_p;
+	/* status */
+	int dev_lost;
+	int driver_active;
+	unsigned int xfer_errors;
+};
 
 static const uint16_t airspy_usb_vid = 0x1d50;
 static const uint16_t airspy_usb_pid = 0x60a1;
@@ -1931,6 +1976,138 @@ int airspy_list_devices(uint64_t *serials, int count)
 			return "Unknown Board ID";
 		}
 	}
+
+static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
+{
+	rtlsdr_dev_t *dev = (rtlsdr_dev_t *)xfer->user_data;
+
+	if (LIBUSB_TRANSFER_COMPLETED == xfer->status) {
+		if (dev->cb)
+			dev->cb(xfer->buffer, xfer->actual_length, dev->cb_ctx);
+
+		libusb_submit_transfer(xfer); /* resubmit transfer */
+		dev->xfer_errors = 0;
+	} else if (LIBUSB_TRANSFER_CANCELLED != xfer->status) {
+#ifndef _WIN32
+		if (LIBUSB_TRANSFER_ERROR == xfer->status)
+			dev->xfer_errors++;
+
+		if (dev->xfer_errors >= dev->xfer_buf_num ||
+		    LIBUSB_TRANSFER_NO_DEVICE == xfer->status) {
+#endif
+			dev->dev_lost = 1;
+			rtlsdr_cancel_async(dev);
+			fprintf(stderr, "cb transfer status: %d, "
+				"canceling...\n", xfer->status);
+#ifndef _WIN32
+		}
+#endif
+	}
+}
+
+int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
+			  uint32_t buf_num, uint32_t buf_len)
+{
+	unsigned int i;
+	int r = 0;
+	struct timeval tv = { 1, 0 };
+	struct timeval zerotv = { 0, 0 };
+	enum rtlsdr_async_status next_status = RTLSDR_INACTIVE;
+
+	if (!dev)
+		return -1;
+
+	if (RTLSDR_INACTIVE != dev->async_status)
+		return -2;
+
+	dev->async_status = RTLSDR_RUNNING;
+	dev->async_cancel = 0;
+
+	dev->cb = cb;
+	dev->cb_ctx = ctx;
+
+	if (buf_num > 0)
+		dev->xfer_buf_num = buf_num;
+	else
+		dev->xfer_buf_num = DEFAULT_BUF_NUMBER;
+
+	if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
+		dev->xfer_buf_len = buf_len;
+	else
+		dev->xfer_buf_len = DEFAULT_BUF_LENGTH;
+
+	//_rtlsdr_alloc_async_buffers(dev);
+
+	for(i = 0; i < dev->xfer_buf_num; ++i) {
+		libusb_fill_bulk_transfer(dev->xfer[i],
+					  dev->devh,
+					  0x81,
+					  dev->xfer_buf[i],
+					  dev->xfer_buf_len,
+					  _libusb_callback,
+					  (void *)dev,
+					  BULK_TIMEOUT);
+
+		r = libusb_submit_transfer(dev->xfer[i]);
+		if (r < 0) {
+			fprintf(stderr, "Failed to submit transfer %i!\n", i);
+			dev->async_status = RTLSDR_CANCELING;
+			break;
+		}
+	}
+
+	while (RTLSDR_INACTIVE != dev->async_status) {
+		r = libusb_handle_events_timeout_completed(dev->ctx, &tv,
+							   &dev->async_cancel);
+		if (r < 0) {
+			/*fprintf(stderr, "handle_events returned: %d\n", r);*/
+			if (r == LIBUSB_ERROR_INTERRUPTED) /* stray signal */
+				continue;
+			break;
+		}
+
+		if (RTLSDR_CANCELING == dev->async_status) {
+			next_status = RTLSDR_INACTIVE;
+
+			if (!dev->xfer)
+				break;
+
+			for(i = 0; i < dev->xfer_buf_num; ++i) {
+				if (!dev->xfer[i])
+					continue;
+
+				if (LIBUSB_TRANSFER_CANCELLED !=
+						dev->xfer[i]->status) {
+					r = libusb_cancel_transfer(dev->xfer[i]);
+					/* handle events after canceling
+					 * to allow transfer status to
+					 * propagate */
+					libusb_handle_events_timeout_completed(dev->ctx,
+									       &zerotv, NULL);
+					if (r < 0)
+						continue;
+
+					next_status = RTLSDR_CANCELING;
+				}
+			}
+
+			if (dev->dev_lost || RTLSDR_INACTIVE == next_status) {
+				/* handle any events that still need to
+				 * be handled before exiting after we
+				 * just cancelled all transfers */
+				libusb_handle_events_timeout_completed(dev->ctx,
+								       &zerotv, NULL);
+				break;
+			}
+		}
+	}
+
+	//_rtlsdr_free_async_buffers(dev);
+
+	dev->async_status = next_status;
+
+	return r;
+}
 
 #ifdef __cplusplus
 } // __cplusplus defined.
