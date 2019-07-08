@@ -36,7 +36,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "iqconverter_int16.h"
 #include "filters.h"
 
-enum rtlsdr_async_status {
+enum airspy_async_status {
 	RTLSDR_INACTIVE = 0,
 	RTLSDR_CANCELING,
 	RTLSDR_RUNNING
@@ -111,16 +111,16 @@ typedef struct airspy_device
 	enum airspy_sample_type sample_type;
 } airspy_device_t;
 
-struct rtlsdr_dev {
+struct airspy_dev {
 	libusb_context *ctx;
 	struct libusb_device_handle *devh;
 	uint32_t xfer_buf_num;
 	uint32_t xfer_buf_len;
 	struct libusb_transfer **xfer;
 	unsigned char **xfer_buf;
-	rtlsdr_read_async_cb_t cb;
+	airspy_read_async_cb_t cb;
 	void *cb_ctx;
-	enum rtlsdr_async_status async_status;
+	enum airspy_async_status async_status;
 	int async_cancel;
 	/* rtl demod context */
 	uint32_t rate; /* Hz */
@@ -128,8 +128,8 @@ struct rtlsdr_dev {
 	//int fir[FIR_LEN];
 	int direct_sampling;
 	/* tuner context */
-	//enum rtlsdr_tuner tuner_type;
-	//rtlsdr_tuner_iface_t *tuner;
+	//enum airspy_tuner tuner_type;
+	//airspy_tuner_iface_t *tuner;
 	uint32_t tun_xtal; /* Hz */
 	uint32_t freq; /* Hz */
 	uint32_t bw;
@@ -1978,7 +1978,7 @@ int airspy_list_devices(uint64_t *serials, int count)
 		}
 	}
 
-int rtlsdr_cancel_async(rtlsdr_dev_t *dev)
+int airspy_cancel_async(airspy_dev_t *dev)
 {
 	if (!dev)
 		return -1;
@@ -2002,7 +2002,7 @@ int rtlsdr_cancel_async(rtlsdr_dev_t *dev)
 
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 {
-	rtlsdr_dev_t *dev = (rtlsdr_dev_t *)xfer->user_data;
+	airspy_dev_t *dev = (airspy_dev_t *)xfer->user_data;
 
 	if (LIBUSB_TRANSFER_COMPLETED == xfer->status) {
 		if (dev->cb)
@@ -2019,7 +2019,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 		    LIBUSB_TRANSFER_NO_DEVICE == xfer->status) {
 #endif
 			dev->dev_lost = 1;
-			rtlsdr_cancel_async(dev);
+			airspy_cancel_async(dev);
 			fprintf(stderr, "cb transfer status: %d, "
 				"canceling...\n", xfer->status);
 #ifndef _WIN32
@@ -2028,14 +2028,14 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 	}
 }
 
-int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
+int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 			  uint32_t buf_num, uint32_t buf_len)
 {
 	unsigned int i;
 	int r = 0;
 	struct timeval tv = { 1, 0 };
 	struct timeval zerotv = { 0, 0 };
-	enum rtlsdr_async_status next_status = RTLSDR_INACTIVE;
+	enum airspy_async_status next_status = RTLSDR_INACTIVE;
 
 	if (!dev)
 		return -1;
@@ -2059,7 +2059,7 @@ int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
 	else
 		dev->xfer_buf_len = DEFAULT_BUF_LENGTH;
 
-	//_rtlsdr_alloc_async_buffers(dev);
+	//_airspy_alloc_async_buffers(dev);
 
 	for(i = 0; i < dev->xfer_buf_num; ++i) {
 		libusb_fill_bulk_transfer(dev->xfer[i],
@@ -2125,7 +2125,7 @@ int rtlsdr_read_async(rtlsdr_dev_t *dev, rtlsdr_read_async_cb_t cb, void *ctx,
 		}
 	}
 
-	//_rtlsdr_free_async_buffers(dev);
+	//_airspy_free_async_buffers(dev);
 
 	dev->async_status = next_status;
 

@@ -519,9 +519,9 @@ void sigint_callback_handler(int signum)
 
 //static int do_exit = 0;
 static uint32_t bytes_to_read = 0;
-static rtlsdr_dev_t *dev = NULL;
+static airspy_dev_t *dev = NULL;
 
-static void rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
+static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 {
 	if (ctx) {
 		if (do_exit)
@@ -530,12 +530,12 @@ static void rtlsdr_callback(unsigned char *buf, uint32_t len, void *ctx)
 		if ((bytes_to_read > 0) && (bytes_to_read < len)) {
 			len = bytes_to_read;
 			do_exit = 1;
-			rtlsdr_cancel_async(dev);
+			airspy_cancel_async(dev);
 		}
 
 		if (fwrite(buf, 1, len, (FILE*)ctx) != len) {
 			fprintf(stderr, "Short write, samples lost, exiting!\n");
-			rtlsdr_cancel_async(dev);
+			airspy_cancel_async(dev);
 		}
 
 		if (bytes_to_read > 0)
@@ -1059,7 +1059,7 @@ int main(int argc, char** argv)
 
 #ifdef airspy_low_power_cpu_mode
 	fprintf(stderr, "Reading samples in async mode...\n");
-	r = rtlsdr_read_async(dev, rtlsdr_callback, (void *)file, 0, out_block_size);
+	r = airspy_read_async(dev, airspy_callback, (void *)file, 0, out_block_size);
 
 	if (do_exit)
 	{
