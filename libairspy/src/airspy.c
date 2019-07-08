@@ -1977,6 +1977,28 @@ int airspy_list_devices(uint64_t *serials, int count)
 		}
 	}
 
+int rtlsdr_cancel_async(rtlsdr_dev_t *dev)
+{
+	if (!dev)
+		return -1;
+
+	/* if streaming, try to cancel gracefully */
+	if (RTLSDR_RUNNING == dev->async_status) {
+		dev->async_status = RTLSDR_CANCELING;
+		dev->async_cancel = 1;
+		return 0;
+	}
+
+	/* if called while in pending state, change the state forcefully */
+#if 0
+	if (RTLSDR_INACTIVE != dev->async_status) {
+		dev->async_status = RTLSDR_INACTIVE;
+		return 0;
+	}
+#endif
+	return -2;
+}
+
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 {
 	rtlsdr_dev_t *dev = (rtlsdr_dev_t *)xfer->user_data;
