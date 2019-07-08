@@ -1033,17 +1033,18 @@ int main(int argc, char** argv)
 		fprintf(stderr, "\nLibrary error %d, exiting...\n", r);
 	}
 	*/
-	result = airspy_start_rx(device, rx_callback, NULL);
-	if( result != AIRSPY_SUCCESS ) {
-		fprintf(stderr, "airspy_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
-		airspy_close(device);
-		airspy_exit();
-		return EXIT_FAILURE;
-	}
 
 	result = airspy_set_freq(device, freq_hz);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_set_freq() failed: %s (%d)\n", airspy_error_name(result), result);
+		airspy_close(device);
+		airspy_exit();
+		return EXIT_FAILURE;
+	}
+	
+	result = airspy_start_rx(device, rx_callback, NULL);
+	if( result != AIRSPY_SUCCESS ) {
+		fprintf(stderr, "airspy_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
 		airspy_close(device);
 		airspy_exit();
 		return EXIT_FAILURE;
