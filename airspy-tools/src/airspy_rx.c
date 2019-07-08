@@ -1019,6 +1019,20 @@ int main(int argc, char** argv)
 		}
 	}
 
+	// konohenkara wo need to modify
+	/*
+	fprintf(stderr, "Reading samples in async mode...\n");
+	r = rtlsdr_read_async(dev, rtlsdr_callback, (void *)file, 0, out_block_size);
+
+	if (do_exit)
+	{
+		fprintf(stderr, "\nUser cancel, exiting...\n");
+	}
+	else
+	{
+		fprintf(stderr, "\nLibrary error %d, exiting...\n", r);
+	}
+	*/
 	result = airspy_start_rx(device, rx_callback, NULL);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
@@ -1085,7 +1099,9 @@ int main(int argc, char** argv)
 		
 		airspy_exit();
 	}
-		
+	// konohenmade wo need to modify
+
+
 	if(fd != NULL)
 	{
 		if( receive_wav ) 
