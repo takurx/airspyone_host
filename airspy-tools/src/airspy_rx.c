@@ -224,6 +224,7 @@ bool receive_wav = false;
 
 struct timeval time_start;
 struct timeval t_start;
+struct timeval t_end;
 
 bool got_first_packet = false;
 float average_rate = 0.0f;
@@ -557,7 +558,7 @@ int main(int argc, char** argv)
 	int result;
 	time_t rawtime;
 	struct tm * timeinfo;
-	struct timeval t_end;
+	//struct timeval t_end;
 	float time_diff;
 	uint32_t file_pos;
 	int exit_code = EXIT_SUCCESS;
@@ -1061,8 +1062,10 @@ int main(int argc, char** argv)
 	}
 
 #ifdef AIRSPY_LOW_POWER_CPU_MODE
+	gettimeofday(&t_start, NULL);
 	fprintf(stderr, "Reading samples in async mode...\n");
-	result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
+	//result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
+	do_exit = 1;
 
 	if (do_exit)
 	{
@@ -1111,6 +1114,8 @@ int main(int argc, char** argv)
 #endif
 
 	gettimeofday(&t_end, NULL);
+	fprintf(stderr, "Start time: %5d, %5d\n", t_start.tv_sec, t_start.tv_usec);
+	fprintf(stderr, "End time: %5d, %d5\n", t_end.tv_sec, t_end.tv_usec);
 	time_diff = TimevalDiff(&t_end, &t_start);
 	fprintf(stderr, "Total time: %5.4f s\n", time_diff);
 	if (rate_samples > 0)

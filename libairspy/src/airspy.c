@@ -115,7 +115,7 @@ typedef struct airspy_device
 	//struct libusb_device_handle *devh;
 	uint32_t xfer_buf_num;
 	uint32_t xfer_buf_len;
-	struct libusb_transfer **xfer;
+	//struct libusb_transfer **xfer;
 	unsigned char **xfer_buf;
 	airspy_read_async_cb_t cb;
 	void *cb_ctx;
@@ -2099,7 +2099,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	for(i = 0; i < device->xfer_buf_num; ++i) {
 		libusb_fill_bulk_transfer(device->transfers[i],
 					  device->usb_device,
-					  0x81,
+					  0,
 					  device->xfer_buf[i],
 					  device->xfer_buf_len,
 					  _libusb_callback,
