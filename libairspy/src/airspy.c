@@ -2063,6 +2063,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 	}
 }
 
+// result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
 int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *ctx,
 			  uint32_t buf_num, uint32_t buf_len)
 {
@@ -2072,9 +2073,11 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	struct timeval zerotv = { 0, 0 };
 	enum airspy_async_status next_status = AIRSPY_INACTIVE;
 
+	fprintf(stderr, "weiwei1...\n");
 	if (!device)
 		return -1;
 
+	fprintf(stderr, "weiwei2...\n");
 	if (AIRSPY_INACTIVE != device->async_status)
 		return -2;
 
@@ -2084,11 +2087,13 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	device->cb = cb;
 	device->cb_ctx = ctx;
 
+	fprintf(stderr, "weiwei3...\n");
 	if (buf_num > 0)
 		device->xfer_buf_num = buf_num;
 	else
 		device->xfer_buf_num = DEFAULT_BUF_NUMBER;
 
+	fprintf(stderr, "weiwei4...\n");
 	if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
 		device->xfer_buf_len = buf_len;
 	else
@@ -2096,6 +2101,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 
 	//_airspy_alloc_async_buffers(dev);
 
+	fprintf(stderr, "weiwei5...\n");	//kokomadekita
 	for(i = 0; i < device->xfer_buf_num; ++i) {
 		libusb_fill_bulk_transfer(device->transfers[i],
 					  device->usb_device,
@@ -2114,6 +2120,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 		}
 	}
 
+	fprintf(stderr, "weiwei6...\n");
 	while (AIRSPY_INACTIVE != device->async_status) {
 		r = libusb_handle_events_timeout_completed(device->usb_context, &tv,
 							   &device->async_cancel);
@@ -2160,6 +2167,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 		}
 	}
 
+	fprintf(stderr, "weiwei7...\n");
 	//_airspy_free_async_buffers(dev);
 
 	device->async_status = next_status;
