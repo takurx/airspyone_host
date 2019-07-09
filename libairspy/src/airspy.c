@@ -2037,21 +2037,29 @@ int airspy_cancel_async(airspy_device_t *device)
 
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 {
+	fprintf(stderr, "_libusb_callback...\n");
 	airspy_device_t *device = (airspy_device_t *)transfers->user_data;
 
-	if (LIBUSB_TRANSFER_COMPLETED == transfers->status) {
+	if (LIBUSB_TRANSFER_COMPLETED == transfers->status) 
+	{
 		if (device->cb)
+		{
 			device->cb(transfers->buffer, transfers->actual_length, device->cb_ctx);
-
+		}
 		libusb_submit_transfer(transfers); /* resubmit transfer */
 		device->xfer_errors = 0;
-	} else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) {
+	}
+	else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) 
+	{
 #ifndef _WIN32
 		if (LIBUSB_TRANSFER_ERROR == transfers->status)
+		{
 			device->xfer_errors++;
+		}
 
 		if (device->xfer_errors >= device->xfer_buf_num ||
-		    LIBUSB_TRANSFER_NO_DEVICE == transfers->status) {
+		    LIBUSB_TRANSFER_NO_DEVICE == transfers->status) 
+		{
 #endif
 			device->dev_lost = 1;
 			airspy_cancel_async(device);
@@ -2073,11 +2081,11 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	struct timeval zerotv = { 0, 0 };
 	enum airspy_async_status next_status = AIRSPY_INACTIVE;
 
-	fprintf(stderr, "weiwei1...\n");
+	//fprintf(stderr, "weiwei1...\n");
 	if (!device)
 		return -1;
 
-	fprintf(stderr, "weiwei2...\n");
+	//fprintf(stderr, "weiwei2...\n");
 	if (AIRSPY_INACTIVE != device->async_status)
 		return -2;
 
@@ -2087,13 +2095,13 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	device->cb = cb;
 	device->cb_ctx = ctx;
 
-	fprintf(stderr, "weiwei3...\n");
+	//fprintf(stderr, "weiwei3...\n");
 	if (buf_num > 0)
 		device->xfer_buf_num = buf_num;
 	else
 		device->xfer_buf_num = DEFAULT_BUF_NUMBER;
 
-	fprintf(stderr, "weiwei4...\n");
+	//fprintf(stderr, "weiwei4...\n");
 	if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
 		device->xfer_buf_len = buf_len;
 	else
@@ -2101,7 +2109,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 
 	//_airspy_alloc_async_buffers(dev);
 
-	fprintf(stderr, "weiwei5...\n");	//kokomadekita
+	//fprintf(stderr, "weiwei5...\n");	//kokomadekita
 	for(i = 0; i < device->xfer_buf_num; ++i) {
 		/*
 		libusb_fill_bulk_transfer(
@@ -2137,6 +2145,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	while (AIRSPY_INACTIVE != device->async_status) {
 		r = libusb_handle_events_timeout_completed(device->usb_context, &tv,
 							   &device->async_cancel);
+		fprintf(stderr, "weiwei9-%d...\n", r);
 		if (r < 0) {
 			/*fprintf(stderr, "handle_events returned: %d\n", r);*/
 			if (r == LIBUSB_ERROR_INTERRUPTED) /* stray signal */
@@ -2150,6 +2159,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 			if (!device->transfers)
 				break;
 
+			fprintf(stderr, "weiwei11...\n");
 			for(i = 0; i < device->xfer_buf_num; ++i) {
 				if (!device->transfers[i])
 					continue;
@@ -2160,6 +2170,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 					/* handle events after canceling
 					 * to allow transfer status to
 					 * propagate */
+					fprintf(stderr, "weiwei11-%d...\n", r);
 					libusb_handle_events_timeout_completed(device->usb_context,
 									       &zerotv, NULL);
 					if (r < 0)
@@ -2169,6 +2180,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 				}
 			}
 
+			fprintf(stderr, "weiwei10...\n");
 			if (device->dev_lost || AIRSPY_INACTIVE == next_status) {
 				/* handle any events that still need to
 				 * be handled before exiting after we
