@@ -2035,28 +2035,28 @@ int airspy_cancel_async(airspy_device_t *device)
 	return -2;
 }
 
-static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
+static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 {
-	airspy_device_t *device = (airspy_device_t *)xfer->user_data;
+	airspy_device_t *device = (airspy_device_t *)transfers->user_data;
 
-	if (LIBUSB_TRANSFER_COMPLETED == xfer->status) {
+	if (LIBUSB_TRANSFER_COMPLETED == transfers->status) {
 		if (device->cb)
-			device->cb(xfer->buffer, xfer->actual_length, device->cb_ctx);
+			device->cb(transfers->buffer, transfers->actual_length, device->cb_ctx);
 
-		libusb_submit_transfer(xfer); /* resubmit transfer */
+		libusb_submit_transfer(transfers); /* resubmit transfer */
 		device->xfer_errors = 0;
-	} else if (LIBUSB_TRANSFER_CANCELLED != xfer->status) {
+	} else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) {
 #ifndef _WIN32
-		if (LIBUSB_TRANSFER_ERROR == xfer->status)
+		if (LIBUSB_TRANSFER_ERROR == transfers->status)
 			device->xfer_errors++;
 
 		if (device->xfer_errors >= device->xfer_buf_num ||
-		    LIBUSB_TRANSFER_NO_DEVICE == xfer->status) {
+		    LIBUSB_TRANSFER_NO_DEVICE == transfers->status) {
 #endif
 			device->dev_lost = 1;
 			airspy_cancel_async(device);
 			fprintf(stderr, "cb transfer status: %d, "
-				"canceling...\n", xfer->status);
+				"canceling...\n", transfers->status);
 #ifndef _WIN32
 		}
 #endif
@@ -2097,7 +2097,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	//_airspy_alloc_async_buffers(dev);
 
 	for(i = 0; i < device->xfer_buf_num; ++i) {
-		libusb_fill_bulk_transfer(device->xfer[i],
+		libusb_fill_bulk_transfer(device->transfers[i],
 					  device->usb_device,
 					  0x81,
 					  device->xfer_buf[i],
@@ -2106,7 +2106,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 					  (void *)device,
 					  BULK_TIMEOUT);
 
-		r = libusb_submit_transfer(device->xfer[i]);
+		r = libusb_submit_transfer(device->transfers[i]);
 		if (r < 0) {
 			fprintf(stderr, "Failed to submit transfer %i!\n", i);
 			device->async_status = AIRSPY_CANCELING;
@@ -2127,16 +2127,16 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 		if (AIRSPY_CANCELING == device->async_status) {
 			next_status = AIRSPY_INACTIVE;
 
-			if (!device->xfer)
+			if (!device->transfers)
 				break;
 
 			for(i = 0; i < device->xfer_buf_num; ++i) {
-				if (!device->xfer[i])
+				if (!device->transfers[i])
 					continue;
 
 				if (LIBUSB_TRANSFER_CANCELLED !=
-						device->xfer[i]->status) {
-					r = libusb_cancel_transfer(device->xfer[i]);
+						device->transfers[i]->status) {
+					r = libusb_cancel_transfer(device->transfers[i]);
 					/* handle events after canceling
 					 * to allow transfer status to
 					 * propagate */
