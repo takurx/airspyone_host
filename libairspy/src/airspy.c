@@ -109,8 +109,42 @@ typedef struct airspy_device
 	iqconverter_int16_t *cnv_i;
 	void* ctx;
 	enum airspy_sample_type sample_type;
+
+	/* rtlsdr_dev */
+	//libusb_context *ctx;
+	struct libusb_device_handle *devh;
+	uint32_t xfer_buf_num;
+	uint32_t xfer_buf_len;
+	struct libusb_transfer **xfer;
+	unsigned char **xfer_buf;
+	airspy_read_async_cb_t cb;
+	void *cb_ctx;
+	enum airspy_async_status async_status;
+	int async_cancel;
+	/* rtl demod context */
+	uint32_t rate; /* Hz */
+	uint32_t rtl_xtal; /* Hz */
+	//int fir[FIR_LEN];
+	int direct_sampling;
+	/* tuner context */
+	//enum airspy_tuner tuner_type;
+	//airspy_tuner_iface_t *tuner;
+	uint32_t tun_xtal; /* Hz */
+	uint32_t freq; /* Hz */
+	uint32_t bw;
+	uint32_t offs_freq; /* Hz */
+	int corr; /* ppm */
+	int gain; /* tenth dB */
+	//struct e4k_state e4k_s;
+	//struct r82xx_config r82xx_c;
+	//struct r82xx_priv r82xx_p;
+	/* status */
+	int dev_lost;
+	int driver_active;
+	unsigned int xfer_errors;
 } airspy_device_t;
 
+#if 0
 struct airspy_dev {
 	libusb_context *ctx;
 	struct libusb_device_handle *devh;
@@ -144,6 +178,7 @@ struct airspy_dev {
 	int driver_active;
 	unsigned int xfer_errors;
 };
+#endif
 
 static const uint16_t airspy_usb_vid = 0x1d50;
 static const uint16_t airspy_usb_pid = 0x60a1;
@@ -1978,7 +2013,7 @@ int airspy_list_devices(uint64_t *serials, int count)
 		}
 	}
 
-int airspy_cancel_async(airspy_dev_t *dev)
+int airspy_cancel_async(airspy_device_t *dev)
 {
 	if (!dev)
 		return -1;
@@ -2002,7 +2037,7 @@ int airspy_cancel_async(airspy_dev_t *dev)
 
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 {
-	airspy_dev_t *dev = (airspy_dev_t *)xfer->user_data;
+	airspy_device_t *dev = (airspy_device_t *)xfer->user_data;
 
 	if (LIBUSB_TRANSFER_COMPLETED == xfer->status) {
 		if (dev->cb)
@@ -2028,7 +2063,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 	}
 }
 
-int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
+int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx,
 			  uint32_t buf_num, uint32_t buf_len)
 {
 	unsigned int i;
@@ -2080,7 +2115,7 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 	}
 
 	while (AIRSPY_INACTIVE != dev->async_status) {
-		r = libusb_handle_events_timeout_completed(dev->ctx, &tv,
+		r = libusb_handle_events_timeout_completed(dev->usb_context, &tv,
 							   &dev->async_cancel);
 		if (r < 0) {
 			/*fprintf(stderr, "handle_events returned: %d\n", r);*/
@@ -2105,7 +2140,7 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 					/* handle events after canceling
 					 * to allow transfer status to
 					 * propagate */
-					libusb_handle_events_timeout_completed(dev->ctx,
+					libusb_handle_events_timeout_completed(dev->usb_context,
 									       &zerotv, NULL);
 					if (r < 0)
 						continue;
@@ -2118,7 +2153,7 @@ int airspy_read_async(airspy_dev_t *dev, airspy_read_async_cb_t cb, void *ctx,
 				/* handle any events that still need to
 				 * be handled before exiting after we
 				 * just cancelled all transfers */
-				libusb_handle_events_timeout_completed(dev->ctx,
+				libusb_handle_events_timeout_completed(dev->usb_context,
 								       &zerotv, NULL);
 				break;
 			}

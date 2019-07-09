@@ -27,7 +27,7 @@ extern "C" {
 
 #include "../../libairspy/src/airspy.h"
 
-typedef struct airspy_dev airspy_dev_t;
+//typedef struct airspy_dev airspy_dev_t;
 
 typedef void(*airspy_read_async_cb_t)(unsigned char *buf, uint32_t len, void *ctx);
 
