@@ -2058,7 +2058,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 	}
 	else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) 
 	{
-		fprintf(stderr, "!=LIBUSB_TRANSFER_CANCELLED...\n");
+		fprintf(stderr, "!=LIBUSB_TRANSFER_CANCELLED, %d...\n", transfers->status);
 #ifndef _WIN32
 		if (LIBUSB_TRANSFER_ERROR == transfers->status)
 		{
