@@ -366,6 +366,7 @@ char* u64toa(uint64_t val, t_u64toa* str)
 	return res;
 }
 
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 int rx_callback(airspy_transfer_t* transfer)
 {
 	uint32_t bytes_to_write;
@@ -471,6 +472,7 @@ int rx_callback(airspy_transfer_t* transfer)
 		return -1;
 	}
 }
+#endif
 
 static void usage(void)
 {
@@ -521,6 +523,7 @@ void sigint_callback_handler(int signum)
 #define PATH_FILE_MAX_LEN (FILENAME_MAX)
 #define DATE_TIME_MAX_LEN (32)
 
+#ifdef AIRSPY_LOW_POWER_CPU_MODE
 //static int do_exit = 0;
 static uint32_t bytes_to_read = 0;
 //static airspy_dev_t *dev = NULL;
@@ -546,6 +549,7 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 			bytes_to_read -= len;
 	}
 }
+#endif
 
 int main(int argc, char** argv)
 {
