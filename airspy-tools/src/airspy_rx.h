@@ -27,9 +27,13 @@ extern "C" {
 
 #include "../../libairspy/src/airspy.h"
 
+#define AIRSPY_LOW_POWER_CPU_MODE 1
+
 //typedef struct airspy_dev airspy_dev_t;
 
 typedef void(*airspy_read_async_cb_t)(unsigned char *buf, uint32_t len, void *ctx);
+
+int airspy_read_async(struct airspy_device* device, airspy_read_async_cb_t cb, void *ctx, uint32_t buf_num, uint32_t buf_len);
 
 #ifdef __cplusplus
 }

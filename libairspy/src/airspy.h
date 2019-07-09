@@ -29,6 +29,8 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <stdint.h>
 #include "airspy_commands.h"
 
+//#include "../../airspy-tools/src/airspy_rx.h"
+
 #define AIRSPY_VERSION "1.0.9"
 #define AIRSPY_VER_MAJOR 1
 #define AIRSPY_VER_MINOR 0
@@ -214,6 +216,11 @@ extern ADDAPI const char* ADDCALL airspy_board_id_name(enum airspy_board_id boar
 
 /* Parameter sector_num shall be between 2 & 13 (sector 0 & 1 are reserved) */
 extern ADDAPI int ADDCALL airspy_spiflash_erase_sector(struct airspy_device* device, const uint16_t sector_num);
+
+int airspy_cancel_async(struct airspy_device* device);
+//static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers);
+//static int _airspy_free_async_buffers(struct airspy_device* device);
+//extern int airspy_read_async(struct airspy_device* device, airspy_read_async_cb_t cb, void *ctx, uint32_t buf_num, uint32_t buf_len)
 
 #ifdef __cplusplus
 } // __cplusplus defined.

@@ -184,12 +184,16 @@ static const uint16_t airspy_usb_vid = 0x1d50;
 static const uint16_t airspy_usb_pid = 0x60a1;
 
 #define STR_PRODUCT_AIRSPY_SIZE (6)
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 static const char str_product_airspy[STR_PRODUCT_AIRSPY_SIZE] =
 { 'A', 'I', 'R', 'S', 'P', 'Y' };
+#endif
 
 #define STR_PREFIX_SERIAL_AIRSPY_SIZE (10)
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 static const char str_prefix_serial_airspy[STR_PREFIX_SERIAL_AIRSPY_SIZE] =
 { 'A', 'I', 'R', 'S', 'P', 'Y', ' ', 'S', 'N', ':' };
+#endif
 
 #define SERIAL_AIRSPY_EXPECTED_SIZE (26)
 
@@ -671,6 +675,7 @@ static void airspy_open_exit(airspy_device_t* device)
 	device->usb_context = NULL;
 }
 
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 static void upper_string(unsigned char *string, size_t len)
 {
 	while (len > 0)
@@ -683,6 +688,7 @@ static void upper_string(unsigned char *string, size_t len)
 		len--;
 	}
 }
+#endif
 
 static void airspy_open_device(airspy_device_t* device,
 	int* ret,
@@ -2042,6 +2048,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 
 	if (LIBUSB_TRANSFER_COMPLETED == transfers->status) 
 	{
+		fprintf(stderr, "LIBUSB_TRANSFER_COMPLETED...\n");
 		if (device->cb)
 		{
 			device->cb(transfers->buffer, transfers->actual_length, device->cb_ctx);
@@ -2051,10 +2058,12 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 	}
 	else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) 
 	{
+		fprintf(stderr, "!=LIBUSB_TRANSFER_CANCELLED...\n");
 #ifndef _WIN32
 		if (LIBUSB_TRANSFER_ERROR == transfers->status)
 		{
 			device->xfer_errors++;
+			fprintf(stderr, "xfer_errors++, %d...\n", device->xfer_errors);
 		}
 
 		if (device->xfer_errors >= device->xfer_buf_num ||
@@ -2069,6 +2078,38 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 		}
 #endif
 	}
+}
+
+static int _airspy_free_async_buffers(airspy_device_t *device)
+{
+	unsigned int i;
+
+	if (!device)
+		return -1;
+
+	if (device->transfers) {
+		for(i = 0; i < device->xfer_buf_num; ++i) {
+			if (device->transfers[i]) {
+				libusb_free_transfer(device->transfers[i]);
+			}
+		}
+
+		free(device->transfers);
+		device->transfers = NULL;
+	}
+
+/*
+	if (device->xfer_buf) {
+		for(i = 0; i < device->xfer_buf_num; ++i) {
+			if (device->xfer_buf[i])
+				free(device->xfer_buf[i]);
+		}
+
+		free(device->xfer_buf);
+		device->xfer_buf = NULL;
+	}
+*/
+	return 0;
 }
 
 // result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
@@ -2115,13 +2156,13 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 		libusb_fill_bulk_transfer(
 					device->transfers[i],
 					device->usb_device,
-					0,
+					0x81,
 					device->xfer_buf[i],
 					device->xfer_buf_len,
 					_libusb_callback,
 					(void *)device,
 					BULK_TIMEOUT);
-		*/
+					*/
 		libusb_fill_bulk_transfer(
 					device->transfers[i],
 					device->usb_device,
@@ -2193,7 +2234,8 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	}
 
 	fprintf(stderr, "weiwei7...\n");
-	//_airspy_free_async_buffers(dev);
+	
+	_airspy_free_async_buffers(device);
 
 	device->async_status = next_status;
 

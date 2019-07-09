@@ -38,6 +38,7 @@
 #include "airspy_rx.h"
 
 #define AIRSPY_RX_VERSION "1.0.5 23 April 2016"
+//#define AIRSPY_LOW_POWER_CPU_MODE 1
 
 #ifndef bool
 typedef int bool;
@@ -257,7 +258,6 @@ uint64_t serial_number_val;
 
 #define DEFAULT_BUF_LENGTH		(16 * 16384)
 uint32_t out_block_size = DEFAULT_BUF_LENGTH;
-#define AIRSPY_LOW_POWER_CPU_MODE 1
 
 static float TimevalDiff(const struct timeval *a, const struct timeval *b)
 {
@@ -574,7 +574,9 @@ int main(int argc, char** argv)
 	uint32_t sample_rate_u32;
 	uint32_t sample_type_u32;
 	double freq_hz_temp;
+#ifndef AIRSPY_LOW_POWER_CPU_MODE
 	char str[20];
+#endif
 
 	while( (opt = getopt(argc, argv, "r:ws:p:f:a:t:b:v:m:l:g:h:n:d")) != EOF )
 	{
@@ -1118,8 +1120,8 @@ int main(int argc, char** argv)
 #endif
 
 	gettimeofday(&t_end, NULL);
-	fprintf(stderr, "Start time: %5d, %5d\n", t_start.tv_sec, t_start.tv_usec);
-	fprintf(stderr, "End time: %5d, %d5\n", t_end.tv_sec, t_end.tv_usec);
+	fprintf(stderr, "Start time: %5ld, %5ld\n", t_start.tv_sec, t_start.tv_usec);
+	fprintf(stderr, "End time: %5ld, %5ld\n", t_end.tv_sec, t_end.tv_usec);
 	time_diff = TimevalDiff(&t_end, &t_start);
 	fprintf(stderr, "Total time: %5.4f s\n", time_diff);
 	if (rate_samples > 0)
