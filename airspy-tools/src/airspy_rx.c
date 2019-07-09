@@ -530,7 +530,7 @@ static uint32_t bytes_to_read = 0;
 
 static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 {
-	fprintf(stderr, "airspy_calback...\n");
+	//fprintf(stderr, "airspy_callback...\n");
 	if (ctx) {
 		if (do_exit)
 			return;
@@ -545,6 +545,12 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 			fprintf(stderr, "Short write, samples lost, exiting!\n");
 			airspy_cancel_async(device);
 		}
+		/*
+		else
+		{
+			fprintf(stderr, "ok");
+		}
+		*/
 
 		if (bytes_to_read > 0)
 			bytes_to_read -= len;

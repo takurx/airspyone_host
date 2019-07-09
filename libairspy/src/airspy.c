@@ -2079,12 +2079,12 @@ int airspy_cancel_async(airspy_device_t *device)
 
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 {
-	fprintf(stderr, "_libusb_callback...\n");
+	//fprintf(stderr, "_libusb_callback...\n");
 	airspy_device_t *device = (airspy_device_t *)transfers->user_data;
 
 	if (LIBUSB_TRANSFER_COMPLETED == transfers->status) 
 	{
-		fprintf(stderr, "LIBUSB_TRANSFER_COMPLETED...\n");
+		//fprintf(stderr, "LIBUSB_TRANSFER_COMPLETED...\n");
 		if (device->cb)
 		{
 			device->cb(transfers->buffer, transfers->actual_length, device->cb_ctx);
@@ -2248,7 +2248,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	while (AIRSPY_INACTIVE != device->async_status) {
 		r = libusb_handle_events_timeout_completed(device->usb_context, &tv,
 							   &device->async_cancel);
-		fprintf(stderr, "weiwei9-%d...\n", r);
+		//fprintf(stderr, "weiwei9-%d...\n", r);
 		if (r < 0) {
 			/*fprintf(stderr, "handle_events returned: %d\n", r);*/
 			if (r == LIBUSB_ERROR_INTERRUPTED) /* stray signal */
