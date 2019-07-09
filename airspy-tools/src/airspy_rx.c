@@ -549,7 +549,6 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 		if (bytes_to_read > 0)
 			bytes_to_read -= len;
 	} 
-	do_exit = 1;
 }
 #endif
 
@@ -1071,7 +1070,6 @@ int main(int argc, char** argv)
 	gettimeofday(&t_start, NULL);
 	fprintf(stderr, "Reading samples in async mode...\n");
 	result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
-	do_exit = 1;
 
 	if (do_exit)
 	{
