@@ -2103,15 +2103,28 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 
 	fprintf(stderr, "weiwei5...\n");	//kokomadekita
 	for(i = 0; i < device->xfer_buf_num; ++i) {
-		libusb_fill_bulk_transfer(device->transfers[i],
-					  device->usb_device,
-					  0,
-					  device->xfer_buf[i],
-					  device->xfer_buf_len,
-					  _libusb_callback,
-					  (void *)device,
-					  BULK_TIMEOUT);
+		/*
+		libusb_fill_bulk_transfer(
+					device->transfers[i],
+					device->usb_device,
+					0,
+					device->xfer_buf[i],
+					device->xfer_buf_len,
+					_libusb_callback,
+					(void *)device,
+					BULK_TIMEOUT);
+		*/
+		libusb_fill_bulk_transfer(
+					device->transfers[i],
+					device->usb_device,
+					0,
+					(unsigned char*)malloc(device->buffer_size),
+					device->buffer_size,
+					_libusb_callback,
+					(void *)device,
+					BULK_TIMEOUT);
 
+		fprintf(stderr, "weiwei8-%d...\n", i);
 		r = libusb_submit_transfer(device->transfers[i]);
 		if (r < 0) {
 			fprintf(stderr, "Failed to submit transfer %i!\n", i);
