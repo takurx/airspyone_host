@@ -508,6 +508,7 @@ sighandler(int signum)
 	if (CTRL_C_EVENT == signum) {
 		fprintf(stderr, "Caught signal %d\n", signum);
 		do_exit = true;
+		airspy_cancel_async(device);
 		return TRUE;
 	}
 	return FALSE;
@@ -517,6 +518,7 @@ void sigint_callback_handler(int signum)
 {
 	fprintf(stderr, "Caught signal %d\n", signum);
 	do_exit = true;
+	airspy_cancel_async(device);
 }
 #endif
 
@@ -533,15 +535,20 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 	//fprintf(stderr, "airspy_callback...\n");
 	if (ctx) {
 		if (do_exit)
+		{
+			fprintf(stderr, "airspy_callback do_exit: true, I want to exit!\n");
 			return;
+		}
 
-		if ((bytes_to_read > 0) && (bytes_to_read < len)) {
+		if ((bytes_to_read > 0) && (bytes_to_read < len)) 
+		{
 			len = bytes_to_read;
-			do_exit = 1;
+			do_exit = true;
 			airspy_cancel_async(device);
 		}
 
-		if (fwrite(buf, 1, len, (FILE*)ctx) != len) {
+		if (fwrite(buf, 1, len, (FILE*)ctx) != len) 
+		{
 			fprintf(stderr, "Short write, samples lost, exiting!\n");
 			airspy_cancel_async(device);
 		}
