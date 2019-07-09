@@ -515,7 +515,7 @@ sighandler(int signum)
 #else
 void sigint_callback_handler(int signum) 
 {
-	//fprintf(stderr, "Caught signal %d\n", signum);
+	fprintf(stderr, "Caught signal %d\n", signum);
 	do_exit = true;
 }
 #endif
