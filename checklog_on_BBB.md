@@ -3,7 +3,10 @@ Airspy mini On BeagleBoneBlack Rev.3
 
 # log
 - Sampling Freq. 3.0MHz
+```
 CPU usage rate: around 36[%] by top command
+```
+
 ```
 ubuntu@arm:~/Github/airspyone_host$ ~/Github/airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000
 Device Serial Number: 0x26A464DC286C2693
@@ -64,7 +67,10 @@ done
 ```
 
 - Sampling Freq. 6.0MHz
+```
 CPU usage rate: around 36[%] by top command
+```
+
 ```
 ubuntu@arm:~/Github/airspyone_host$ ~/Github/airspyone_host/build/airspy-tools/src/airspy_rx -a 6000000 -r /dev/null -t 2 -n 3000000 
 Device Serial Number: 0x26A464DC286C2693
