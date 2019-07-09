@@ -2117,7 +2117,7 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 		libusb_fill_bulk_transfer(
 					device->transfers[i],
 					device->usb_device,
-					0,
+					0x81,
 					(unsigned char*)malloc(device->buffer_size),
 					device->buffer_size,
 					_libusb_callback,
