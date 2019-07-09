@@ -1069,6 +1069,16 @@ int main(int argc, char** argv)
 	}
 
 #ifdef AIRSPY_LOW_POWER_CPU_MODE
+	result = airspy_low_power_cpu_start_rx(device);
+	if( result != AIRSPY_SUCCESS ) {
+		fprintf(stderr, "airspy_low_power_cpu_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
+		airspy_close(device);
+		airspy_exit();
+		return EXIT_FAILURE;
+	}
+
+	fprintf(stderr, "Stop with Ctrl-C\n");
+
 	gettimeofday(&t_start, NULL);
 	fprintf(stderr, "Reading samples in async mode...\n");
 	result = airspy_read_async(device, airspy_callback, (void *)fd, 0, out_block_size);
@@ -1129,7 +1139,15 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Average speed %2.4f MSPS %s\n", (global_average_rate * 1e-6f / rate_samples), (wav_nb_channels == 2 ? "IQ" : "Real"));
 	}
 
-#ifndef AIRSPY_LOW_POWER_CPU_MODE
+#ifdef AIRSPY_LOW_POWER_CPU_MODE
+	if(device != NULL)
+	{
+		result = airspy_low_power_cpu_stop_rx(device);
+		if( result != AIRSPY_SUCCESS ) {
+			fprintf(stderr, "airspy_low_power_cpu_stop_rx() failed: %s (%d)\n", airspy_error_name(result), result);
+		}
+	}	
+#else
 	if(device != NULL)
 	{
 		result = airspy_stop_rx(device);

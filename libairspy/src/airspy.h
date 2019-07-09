@@ -143,6 +143,9 @@ extern ADDAPI int ADDCALL airspy_set_conversion_filter_int16(struct airspy_devic
 extern ADDAPI int ADDCALL airspy_start_rx(struct airspy_device* device, airspy_sample_block_cb_fn callback, void* rx_ctx);
 extern ADDAPI int ADDCALL airspy_stop_rx(struct airspy_device* device);
 
+extern ADDAPI int ADDCALL airspy_low_power_cpu_start_rx(struct airspy_device* device);
+extern ADDAPI int ADDCALL airspy_low_power_cpu_stop_rx(struct airspy_device* device);
+
 /* return AIRSPY_TRUE if success */
 extern ADDAPI int ADDCALL airspy_is_streaming(struct airspy_device* device);
 

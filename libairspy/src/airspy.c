@@ -1240,6 +1240,42 @@ int airspy_list_devices(uint64_t *serials, int count)
 		return result1;
 	}
 
+	int ADDCALL airspy_low_power_cpu_start_rx(airspy_device_t* device)
+	{
+		int result;
+
+		memset(device->dropped_buffers_queue, 0, RAW_BUFFER_COUNT * sizeof(uint32_t));
+		device->dropped_buffers = 0;
+
+		result = airspy_set_receiver_mode(device, RECEIVER_MODE_OFF);
+		if (result != AIRSPY_SUCCESS)
+		{
+			return result;
+		}
+
+		libusb_clear_halt(device->usb_device, LIBUSB_ENDPOINT_IN | 1);
+
+		result = airspy_set_receiver_mode(device, RECEIVER_MODE_RX);
+		if (result != AIRSPY_SUCCESS)
+		{
+			return result;
+		}
+
+		return AIRSPY_SUCCESS;
+	}
+
+	int ADDCALL airspy_low_power_cpu_stop_rx(airspy_device_t* device)
+	{
+		int result2;
+
+		result2 = airspy_set_receiver_mode(device, RECEIVER_MODE_OFF);
+		if (result2 != AIRSPY_SUCCESS)
+		{
+			return result2;
+		}
+		return AIRSPY_SUCCESS;
+	}
+
 	int ADDCALL airspy_si5351c_read(airspy_device_t* device, uint8_t register_number, uint8_t* value)
 	{
 		uint8_t temp_value;
@@ -2080,6 +2116,32 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 	}
 }
 
+static int _airspy_alloc_async_buffers(airspy_device_t *device)
+{
+	unsigned int i;
+
+	if (!device)
+		return -1;
+
+	if (!device->transfers) {
+		device->transfers = malloc(device->xfer_buf_num *
+				   sizeof(struct libusb_transfer *));
+
+		for(i = 0; i < device->xfer_buf_num; ++i)
+			device->transfers[i] = libusb_alloc_transfer(0);
+	}
+
+	if (!device->xfer_buf) {
+		device->xfer_buf = malloc(device->xfer_buf_num *
+					   sizeof(unsigned char *));
+
+		for(i = 0; i < device->xfer_buf_num; ++i)
+			device->xfer_buf[i] = malloc(device->xfer_buf_len);
+	}
+
+	return 0;
+}
+
 static int _airspy_free_async_buffers(airspy_device_t *device)
 {
 	unsigned int i;
@@ -2098,7 +2160,6 @@ static int _airspy_free_async_buffers(airspy_device_t *device)
 		device->transfers = NULL;
 	}
 
-/*
 	if (device->xfer_buf) {
 		for(i = 0; i < device->xfer_buf_num; ++i) {
 			if (device->xfer_buf[i])
@@ -2108,7 +2169,7 @@ static int _airspy_free_async_buffers(airspy_device_t *device)
 		free(device->xfer_buf);
 		device->xfer_buf = NULL;
 	}
-*/
+
 	return 0;
 }
 
@@ -2137,22 +2198,33 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	device->cb_ctx = ctx;
 
 	//fprintf(stderr, "weiwei3...\n");
-	if (buf_num > 0)
-		device->xfer_buf_num = buf_num;
-	else
-		device->xfer_buf_num = DEFAULT_BUF_NUMBER;
+	//if (buf_num > 0)
+	//	device->xfer_buf_num = buf_num;
+	//else
+	device->xfer_buf_num = DEFAULT_BUF_NUMBER;
 
 	//fprintf(stderr, "weiwei4...\n");
-	if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
-		device->xfer_buf_len = buf_len;
-	else
-		device->xfer_buf_len = DEFAULT_BUF_LENGTH;
+	//if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
+	//	device->buffer_size = buf_len;
+	//else
+	device->xfer_buf_len = DEFAULT_BUF_LENGTH; 
+	device->buffer_size = DEFAULT_BUF_LENGTH;
 
-	//_airspy_alloc_async_buffers(dev);
+	_airspy_alloc_async_buffers(device);
 
 	//fprintf(stderr, "weiwei5...\n");	//kokomadekita
 	for(i = 0; i < device->xfer_buf_num; ++i) {
 		/*
+		libusb_fill_bulk_transfer(
+				device->transfers[transfer_index],
+				device->usb_device,
+				0,
+				(unsigned char*)malloc(device->buffer_size),
+				device->buffer_size,
+				NULL,
+				device,
+				0);
+					*/
 		libusb_fill_bulk_transfer(
 					device->transfers[i],
 					device->usb_device,
@@ -2162,21 +2234,11 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 					_libusb_callback,
 					(void *)device,
 					BULK_TIMEOUT);
-					*/
-		libusb_fill_bulk_transfer(
-					device->transfers[i],
-					device->usb_device,
-					0x81,
-					(unsigned char*)malloc(device->buffer_size),
-					device->buffer_size,
-					_libusb_callback,
-					(void *)device,
-					BULK_TIMEOUT);
 
 		fprintf(stderr, "weiwei8-%d...\n", i);
 		r = libusb_submit_transfer(device->transfers[i]);
 		if (r < 0) {
-			fprintf(stderr, "Failed to submit transfer %i!\n", i);
+			fprintf(stderr, "Failed to submit transfer %i, %d!\n", i, r);
 			device->async_status = AIRSPY_CANCELING;
 			break;
 		}
