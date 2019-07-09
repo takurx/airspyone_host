@@ -256,7 +256,7 @@ uint32_t biast_val;
 bool serial_number = false;
 uint64_t serial_number_val;
 
-#define DEFAULT_BUF_LENGTH		(16 * 16384)
+#define DEFAULT_BUF_LENGTH	262144	//(16 * 32 * 512)//(16 * 16384)
 uint32_t out_block_size = DEFAULT_BUF_LENGTH;
 
 static float TimevalDiff(const struct timeval *a, const struct timeval *b)
@@ -560,7 +560,38 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 		*/
 
 		if (bytes_to_read > 0)
+		{
 			bytes_to_read -= len;
+		}
+
+		struct timeval time_now;
+		float time_difference;
+		float rate;
+
+		gettimeofday(&time_now, NULL);
+
+		if (!got_first_packet)
+		{
+			t_start = time_now;
+			time_start = time_now;
+			got_first_packet = true;
+		}
+		else
+		{
+			buffer_count++;
+			sample_count += 131072; //DEFAULT_BUF_LENGTH/2;
+			if (buffer_count == 50)
+			{
+				time_difference = TimevalDiff(&time_now, &time_start);
+				rate = (float) sample_count / time_difference;
+				average_rate += 0.2f * (rate - average_rate);
+				global_average_rate += average_rate;
+				rate_samples++;
+				time_start = time_now;
+				sample_count = 0;
+				buffer_count = 0;
+			}
+		}
 	} 
 }
 #endif
