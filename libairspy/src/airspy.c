@@ -112,7 +112,7 @@ typedef struct airspy_device
 
 	/* rtlsdr_dev */
 	//libusb_context *ctx;
-	struct libusb_device_handle *devh;
+	//struct libusb_device_handle *devh;
 	uint32_t xfer_buf_num;
 	uint32_t xfer_buf_len;
 	struct libusb_transfer **xfer;
@@ -2098,7 +2098,7 @@ int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx
 
 	for(i = 0; i < dev->xfer_buf_num; ++i) {
 		libusb_fill_bulk_transfer(dev->xfer[i],
-					  dev->devh,
+					  dev->usb_device,
 					  0x81,
 					  dev->xfer_buf[i],
 					  dev->xfer_buf_len,

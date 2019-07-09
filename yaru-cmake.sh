@@ -12,5 +12,5 @@ echo -e "\033[1;34m command: $ cmake ../ -DINSTALL_UDEV_RULES=ON \033[0;39m"
 cmake ../ -DINSTALL_UDEV_RULES=ON
 echo -e "\033[1;34m command: $ make \033[0;39m"
 make
-echo -e "\033[1;34m test command: $ ~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000 \033[0;39m"
-~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000
+#echo -e "\033[1;34m test command: $ ~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000 \033[0;39m"
+#~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000
