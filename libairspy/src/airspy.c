@@ -2013,22 +2013,22 @@ int airspy_list_devices(uint64_t *serials, int count)
 		}
 	}
 
-int airspy_cancel_async(airspy_device_t *dev)
+int airspy_cancel_async(airspy_device_t *device)
 {
-	if (!dev)
+	if (!device)
 		return -1;
 
 	/* if streaming, try to cancel gracefully */
-	if (AIRSPY_RUNNING == dev->async_status) {
-		dev->async_status = AIRSPY_CANCELING;
-		dev->async_cancel = 1;
+	if (AIRSPY_RUNNING == device->async_status) {
+		device->async_status = AIRSPY_CANCELING;
+		device->async_cancel = 1;
 		return 0;
 	}
 
 	/* if called while in pending state, change the state forcefully */
 #if 0
-	if (AIRSPY_INACTIVE != dev->async_status) {
-		dev->async_status = AIRSPY_INACTIVE;
+	if (AIRSPY_INACTIVE != device->async_status) {
+		device->async_status = AIRSPY_INACTIVE;
 		return 0;
 	}
 #endif
@@ -2037,24 +2037,24 @@ int airspy_cancel_async(airspy_device_t *dev)
 
 static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 {
-	airspy_device_t *dev = (airspy_device_t *)xfer->user_data;
+	airspy_device_t *device = (airspy_device_t *)xfer->user_data;
 
 	if (LIBUSB_TRANSFER_COMPLETED == xfer->status) {
-		if (dev->cb)
-			dev->cb(xfer->buffer, xfer->actual_length, dev->cb_ctx);
+		if (device->cb)
+			device->cb(xfer->buffer, xfer->actual_length, device->cb_ctx);
 
 		libusb_submit_transfer(xfer); /* resubmit transfer */
-		dev->xfer_errors = 0;
+		device->xfer_errors = 0;
 	} else if (LIBUSB_TRANSFER_CANCELLED != xfer->status) {
 #ifndef _WIN32
 		if (LIBUSB_TRANSFER_ERROR == xfer->status)
-			dev->xfer_errors++;
+			device->xfer_errors++;
 
-		if (dev->xfer_errors >= dev->xfer_buf_num ||
+		if (device->xfer_errors >= device->xfer_buf_num ||
 		    LIBUSB_TRANSFER_NO_DEVICE == xfer->status) {
 #endif
-			dev->dev_lost = 1;
-			airspy_cancel_async(dev);
+			device->dev_lost = 1;
+			airspy_cancel_async(device);
 			fprintf(stderr, "cb transfer status: %d, "
 				"canceling...\n", xfer->status);
 #ifndef _WIN32
@@ -2063,7 +2063,7 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *xfer)
 	}
 }
 
-int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx,
+int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *ctx,
 			  uint32_t buf_num, uint32_t buf_len)
 {
 	unsigned int i;
@@ -2072,51 +2072,51 @@ int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx
 	struct timeval zerotv = { 0, 0 };
 	enum airspy_async_status next_status = AIRSPY_INACTIVE;
 
-	if (!dev)
+	if (!device)
 		return -1;
 
-	if (AIRSPY_INACTIVE != dev->async_status)
+	if (AIRSPY_INACTIVE != device->async_status)
 		return -2;
 
-	dev->async_status = AIRSPY_RUNNING;
-	dev->async_cancel = 0;
+	device->async_status = AIRSPY_RUNNING;
+	device->async_cancel = 0;
 
-	dev->cb = cb;
-	dev->cb_ctx = ctx;
+	device->cb = cb;
+	device->cb_ctx = ctx;
 
 	if (buf_num > 0)
-		dev->xfer_buf_num = buf_num;
+		device->xfer_buf_num = buf_num;
 	else
-		dev->xfer_buf_num = DEFAULT_BUF_NUMBER;
+		device->xfer_buf_num = DEFAULT_BUF_NUMBER;
 
 	if (buf_len > 0 && buf_len % 512 == 0) /* len must be multiple of 512 */
-		dev->xfer_buf_len = buf_len;
+		device->xfer_buf_len = buf_len;
 	else
-		dev->xfer_buf_len = DEFAULT_BUF_LENGTH;
+		device->xfer_buf_len = DEFAULT_BUF_LENGTH;
 
 	//_airspy_alloc_async_buffers(dev);
 
-	for(i = 0; i < dev->xfer_buf_num; ++i) {
-		libusb_fill_bulk_transfer(dev->xfer[i],
-					  dev->usb_device,
+	for(i = 0; i < device->xfer_buf_num; ++i) {
+		libusb_fill_bulk_transfer(device->xfer[i],
+					  device->usb_device,
 					  0x81,
-					  dev->xfer_buf[i],
-					  dev->xfer_buf_len,
+					  device->xfer_buf[i],
+					  device->xfer_buf_len,
 					  _libusb_callback,
-					  (void *)dev,
+					  (void *)device,
 					  BULK_TIMEOUT);
 
-		r = libusb_submit_transfer(dev->xfer[i]);
+		r = libusb_submit_transfer(device->xfer[i]);
 		if (r < 0) {
 			fprintf(stderr, "Failed to submit transfer %i!\n", i);
-			dev->async_status = AIRSPY_CANCELING;
+			device->async_status = AIRSPY_CANCELING;
 			break;
 		}
 	}
 
-	while (AIRSPY_INACTIVE != dev->async_status) {
-		r = libusb_handle_events_timeout_completed(dev->usb_context, &tv,
-							   &dev->async_cancel);
+	while (AIRSPY_INACTIVE != device->async_status) {
+		r = libusb_handle_events_timeout_completed(device->usb_context, &tv,
+							   &device->async_cancel);
 		if (r < 0) {
 			/*fprintf(stderr, "handle_events returned: %d\n", r);*/
 			if (r == LIBUSB_ERROR_INTERRUPTED) /* stray signal */
@@ -2124,23 +2124,23 @@ int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx
 			break;
 		}
 
-		if (AIRSPY_CANCELING == dev->async_status) {
+		if (AIRSPY_CANCELING == device->async_status) {
 			next_status = AIRSPY_INACTIVE;
 
-			if (!dev->xfer)
+			if (!device->xfer)
 				break;
 
-			for(i = 0; i < dev->xfer_buf_num; ++i) {
-				if (!dev->xfer[i])
+			for(i = 0; i < device->xfer_buf_num; ++i) {
+				if (!device->xfer[i])
 					continue;
 
 				if (LIBUSB_TRANSFER_CANCELLED !=
-						dev->xfer[i]->status) {
-					r = libusb_cancel_transfer(dev->xfer[i]);
+						device->xfer[i]->status) {
+					r = libusb_cancel_transfer(device->xfer[i]);
 					/* handle events after canceling
 					 * to allow transfer status to
 					 * propagate */
-					libusb_handle_events_timeout_completed(dev->usb_context,
+					libusb_handle_events_timeout_completed(device->usb_context,
 									       &zerotv, NULL);
 					if (r < 0)
 						continue;
@@ -2149,11 +2149,11 @@ int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx
 				}
 			}
 
-			if (dev->dev_lost || AIRSPY_INACTIVE == next_status) {
+			if (device->dev_lost || AIRSPY_INACTIVE == next_status) {
 				/* handle any events that still need to
 				 * be handled before exiting after we
 				 * just cancelled all transfers */
-				libusb_handle_events_timeout_completed(dev->usb_context,
+				libusb_handle_events_timeout_completed(device->usb_context,
 								       &zerotv, NULL);
 				break;
 			}
@@ -2162,7 +2162,7 @@ int airspy_read_async(airspy_device_t *dev, airspy_read_async_cb_t cb, void *ctx
 
 	//_airspy_free_async_buffers(dev);
 
-	dev->async_status = next_status;
+	device->async_status = next_status;
 
 	return r;
 }
