@@ -2369,7 +2369,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 {
 	if (!device)
 		return -1;
-
+	/*
 	//return rtlsdr_demod_write_reg(dev, 0, 0x19, on ? 0x03 : 0x05, 1);
 	int r;
 	uint16_t len = 1;
@@ -2424,7 +2424,8 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	//return reg;
 
 	return (r == len) ? 0 : -1;
-/*
+	*/
+
 	int result;
 	int result2;
 	uint8_t* value;
@@ -2448,7 +2449,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	{
 		return AIRSPY_SUCCESS;
 	}
-	*/
+	
 	/* 
 	if (on)
 	{
