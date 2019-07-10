@@ -2390,11 +2390,11 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	fprintf(stderr, "data[0]: %x\n", data[0]);
 	fprintf(stderr, "data[1]: %x\n", data[1]);
 	fprintf(stderr, "len: %x\n", len);
-	
+
 	r = libusb_control_transfer(
 		device->usb_device, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 
-		AIRSPY_R820T_WRITE, //0, 
+		0,//AIRSPY_R820T_WRITE, //0, 
 		addr, 
 		index, 
 		data, 
