@@ -2394,11 +2394,11 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	r = libusb_control_transfer(
 		device->usb_device, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 
-		0,//AIRSPY_R820T_WRITE, //0, 
-		addr, 
-		index, 
-		data, 
-		len, 
+		AIRSPY_R820T_WRITE, //0, 
+		data, //addr, 
+		addr, //index, 
+		NULL, //data, 
+		0, //len, 
 		0//CTRL_TIMEOUT
 		);
 
