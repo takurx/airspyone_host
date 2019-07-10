@@ -1170,7 +1170,7 @@ int main(int argc, char** argv)
 #ifdef AIRSPY_LOW_POWER_CPU_MODE
 	/* Enable test mode */
 	result = airspy_set_testmode(device, 1);
-
+ 
 	result = airspy_low_power_cpu_start_rx(device);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_low_power_cpu_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
