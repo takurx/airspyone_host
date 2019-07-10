@@ -2369,7 +2369,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 {
 	if (!device)
 		return -1;
-	/*
+	
 	//return rtlsdr_demod_write_reg(dev, 0, 0x19, on ? 0x03 : 0x05, 1);
 	int r;
 	uint16_t len = 1;
@@ -2385,6 +2385,12 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 
 	data[1] = val & 0xff;
 
+	fprintf(stderr, "addr: %x\n", addr);
+	fprintf(stderr, "index: %x\n", index);
+	fprintf(stderr, "data[0]: %x\n", data[0]);
+	fprintf(stderr, "data[1]: %x\n", data[1]);
+	fprintf(stderr, "len: %x\n", len);
+	
 	r = libusb_control_transfer(
 		device->usb_device, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 
@@ -2398,7 +2404,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 
 	if (r < 0)
 		fprintf(stderr, "%s failed with %d\n", __FUNCTION__, r);
-
+/* 
 	//rtlsdr_demod_read_reg(dev, 0x0a, 0x01, 1);
 	index = 0x0a;
 	uint16_t reg;
@@ -2426,6 +2432,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	return (r == len) ? 0 : -1;
 	*/
 
+/*
 	int result;
 	int result2;
 	uint8_t* value;
@@ -2449,7 +2456,7 @@ int airspy_set_testmode(airspy_device_t *device, int on)
 	{
 		return AIRSPY_SUCCESS;
 	}
-	
+*/	
 	/* 
 	if (on)
 	{
