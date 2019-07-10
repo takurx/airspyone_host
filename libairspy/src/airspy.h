@@ -224,6 +224,7 @@ int airspy_cancel_async(struct airspy_device* device);
 //static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers);
 //static int _airspy_free_async_buffers(struct airspy_device* device);
 //extern int airspy_read_async(struct airspy_device* device, airspy_read_async_cb_t cb, void *ctx, uint32_t buf_num, uint32_t buf_len)
+int airspy_set_testmode(struct airspy_device* device, int on);
 
 #ifdef __cplusplus
 } // __cplusplus defined.

@@ -2304,6 +2304,83 @@ int airspy_read_async(airspy_device_t *device, airspy_read_async_cb_t cb, void *
 	return r;
 }
 
+#define CTRL_TIMEOUT	0
+
+uint16_t airspy_demod_read_reg(airspy_device_t *device, uint8_t page, uint16_t addr, uint8_t len)
+{
+	int r;
+	unsigned char data[2];
+
+	uint16_t index = page;
+	uint16_t reg;
+	addr = (addr << 8) | 0x20;
+
+	r = libusb_control_transfer(
+		device->usb_device, 
+		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 
+		AIRSPY_R820T_READ, //0, 
+		addr, 
+		index, 
+		data, 
+		len, 
+		CTRL_TIMEOUT);
+
+	if (r < 0)
+		fprintf(stderr, "%s failed with %d\n", __FUNCTION__, r);
+
+	reg = (data[1] << 8) | data[0];
+
+	return reg;
+}
+
+int airspy_demod_write_reg(airspy_device_t *device, uint8_t page, uint16_t addr, uint16_t val, uint8_t len)
+{
+	int r;
+	unsigned char data[2];
+	uint16_t index = 0x10 | page;
+	addr = (addr << 8) | 0x20;
+
+	if (len == 1)
+		data[0] = val & 0xff;
+	else
+		data[0] = val >> 8;
+
+	data[1] = val & 0xff;
+
+	r = libusb_control_transfer(
+		device->usb_device, 
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 
+		AIRSPY_R820T_WRITE, //0, 
+		addr, 
+		index, 
+		data, 
+		len, 
+		CTRL_TIMEOUT);
+
+	if (r < 0)
+		fprintf(stderr, "%s failed with %d\n", __FUNCTION__, r);
+
+	airspy_demod_read_reg(device, 0x0a, 0x01, 1);
+
+	return (r == len) ? 0 : -1;
+}
+
+int airspy_set_testmode(airspy_device_t *device, int on)
+{
+	if (!device)
+		return -1;
+
+	if (on)
+	{
+		return airspy_demod_write_reg(device, 0, 0x19, 0x03, 1);
+	}
+	else
+	{
+		return AIRSPY_SUCCESS;
+	}
+	
+}
+
 #ifdef __cplusplus
 } // __cplusplus defined.
 #endif

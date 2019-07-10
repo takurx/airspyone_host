@@ -530,8 +530,63 @@ void sigint_callback_handler(int signum)
 static uint32_t bytes_to_read = 0;
 //static airspy_dev_t *dev = NULL;
 
+static uint32_t total_samples = 0;
+static uint32_t dropped_samples = 0;
+
+static void underrun_test(unsigned char *buf, uint32_t len, int mute)
+{
+	uint32_t i, lost = 0;
+	static uint8_t bcnt, uninit = 1;
+
+	if (uninit) {
+		bcnt = buf[0];
+		uninit = 0;
+	}
+	for (i = 0; i < len; i = i + 2) {
+		printf("bcnt: %x, buf[i]: %x\n", bcnt, buf[i]);
+		if(bcnt != buf[i]) {
+			//lost += (buf[i] > bcnt) ? (buf[i] - bcnt) : (bcnt - buf[i]);
+			if (buf[i] > bcnt)
+			{
+				lost = lost + (buf[i] - bcnt);
+			}
+			else
+			{
+				lost = lost + (bcnt - buf[i]);
+			}
+			bcnt = buf[i];
+		}
+
+		bcnt++;
+	}
+
+	total_samples += len;
+	dropped_samples += lost;
+	if (mute)
+		return;
+	if (lost)
+		printf("lost at least %d bytes\n", lost);
+
+}
+
 static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 {
+	static uint8_t uninit = 1;
+	uint32_t i;
+
+	if (uninit) {
+		for (i = 0; i < len/512; i = i + 1)
+		{
+			printf("%x", buf[i]);
+			if(i % 16 == 0)
+			{
+				printf("\n");
+			}
+		}
+		uninit = 0;
+	}
+
+	//underrun_test(buf, len, 0);
 	//fprintf(stderr, "airspy_callback...\n");
 	if (ctx) {
 		if (do_exit)
@@ -1113,6 +1168,9 @@ int main(int argc, char** argv)
 	}
 
 #ifdef AIRSPY_LOW_POWER_CPU_MODE
+	/* Enable test mode */
+	result = airspy_set_testmode(device, 1);
+
 	result = airspy_low_power_cpu_start_rx(device);
 	if( result != AIRSPY_SUCCESS ) {
 		fprintf(stderr, "airspy_low_power_cpu_start_rx() failed: %s (%d)\n", airspy_error_name(result), result);
@@ -1190,7 +1248,7 @@ int main(int argc, char** argv)
 		if( result != AIRSPY_SUCCESS ) {
 			fprintf(stderr, "airspy_low_power_cpu_stop_rx() failed: %s (%d)\n", airspy_error_name(result), result);
 		}
-	}	
+	}
 #else
 	if(device != NULL)
 	{
