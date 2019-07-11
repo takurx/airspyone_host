@@ -345,7 +345,7 @@ static int allocate_transfers(airspy_device_t* const device)
 			}
 		}
 
-		fprintf(stderr, "sample_count: %ld\n", sample_count);
+		fprintf(stderr, "sample_count: %d\n", sample_count);
 		return AIRSPY_SUCCESS;
 	}
 	else

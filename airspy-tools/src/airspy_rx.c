@@ -595,7 +595,7 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 				sample_count = 0;
 				buffer_count = 0;
 
-				fprintf(stderr, "Average speed %2.4f MSPS, %2.4f, %2.4f, %ld\n", (global_average_rate * 1e-6f / rate_samples), average_rate, rate, total_len);
+				fprintf(stderr, "Average speed %2.4f MSPS, %2.4f, %2.4f, %lld\n", (global_average_rate * 1e-6f / rate_samples), average_rate, rate, total_len);
 				total_len = 0;
 			}
 		}
