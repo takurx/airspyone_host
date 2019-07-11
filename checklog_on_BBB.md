@@ -189,3 +189,26 @@ Average speed 4.9151 MSPS, 7084951.5000, 12003546.0000, 13107200
 Average speed 5.5455 MSPS, 8067189.5000, 11996142.0000, 13107200
 Average speed 6.0970 MSPS, 8854245.0000, 12002469.0000, 13107200
 ```
+
+kernel error
+```
+ubuntu@arm:~/Github/airspyone_host$ dmesg --reltime
+
+[Jul11 07:57] usb 1-1.1: USB disconnect, device number 9
+[ +13.532621] usb 1-1.4: new high-speed USB device number 10 using musb-hdrc
+[  +0.100631] usb 1-1.4: New USB device found, idVendor=1d50, idProduct=60a1
+[  +0.000022] usb 1-1.4: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[  +0.000008] usb 1-1.4: Product: AIRSPY
+[  +0.000008] usb 1-1.4: Manufacturer: www.airspy.com
+[  +0.000008] usb 1-1.4: SerialNumber: AIRSPY SN:26A464DC286C2693
+[  +0.009663] airspy 1-1.4:1.0: Board ID: 00
+[  +0.000021] airspy 1-1.4:1.0: Firmware version: AirSpy MINI v1.0.0-rc10-0-g946184a 2016-09-19
+[  +0.000909] airspy 1-1.4:1.0: Registered as swradio0
+[  +0.000013] airspy 1-1.4:1.0: SDR API is still slightly experimental and functionality changes may follow
+[Jul11 07:59] musb_ep_program 916: broken !rx_reinit, ep3 csr 0203
+[  +0.006156] musb_host_rx 1965: Rx interrupt with no errors or packet!
+[  +0.006664] musb_host_rx 1965: Rx interrupt with no errors or packet!
+[  +0.020713] musb_ep_program 916: broken !rx_reinit, ep3 csr 0003
+[  +0.006154] musb_host_rx 1965: Rx interrupt with no errors or packet!
+[  +0.006664] musb_host_rx 1965: Rx interrupt with no errors or packet!
+```
