@@ -136,6 +136,8 @@ done
 rateが6Mに足りてないのでは。
 on BBB
 ```
+test command: $ ~/Github/airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000 
+
 weiwei8-14...
 weiwei6...
 Average speed 1.0935 MSPS, 1093549.8750, 5467749.0000, 13369344
@@ -147,8 +149,23 @@ Average speed 2.6100 MSPS, 3742107.0000, 5038363.0000, 13107200
 Average speed 2.8085 MSPS, 3999527.0000, 5029207.0000, 13107200
 ```
 
+```
+ubuntu@arm:~/Github/airspyone_host$ ~/Github/airspyone_host/build/airspy-tools/src/airspy_rx -a 6000000 -r /dev/null -t 2 -n 3000000
+
+weiwei8-13...
+weiwei8-14...
+weiwei6...
+Average speed 1.0946 MSPS, 1094582.6250, 5472913.0000, 13369344
+Average speed 1.4886 MSPS, 1882662.7500, 5034983.5000, 13107200
+Average speed 1.8303 MSPS, 2513666.5000, 5037681.5000, 13107200
+Average speed 2.1279 MSPS, 3020675.2500, 5048710.5000, 13107200
+Average speed 2.3876 MSPS, 3426539.0000, 5049994.5000, 13107200
+```
+
 on PC
 ```
+test command: $ ~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 3000000 -r /dev/null -t 2 -n 3000000
+
 weiwei8-13...
 weiwei8-14...
 weiwei6...
@@ -157,4 +174,18 @@ Average speed 1.6801 MSPS, 2160198.5000, 6001086.0000, 13107200
 Average speed 2.0960 MSPS, 2927967.2500, 5999042.5000, 13107200
 Average speed 2.4577 MSPS, 3542657.0000, 6001416.0000, 13107200
 Average speed 2.7729 MSPS, 4033883.5000, 5998790.0000, 13107200
+```
+
+```
+chino@kafu:~/Github/takurx_airspyone_host$ ~/Github/takurx_airspyone_host/build/airspy-tools/src/airspy_rx -a 6000000 -r /dev/null -t 2 -n 3000000
+
+weiwei8-13...
+weiwei8-14...
+weiwei6...
+Average speed 2.3997 MSPS, 2399742.2500, 11998711.0000, 13369344
+Average speed 3.3601 MSPS, 4320406.0000, 12003061.0000, 13107200
+Average speed 4.1918 MSPS, 5855303.0000, 11994890.0000, 13107200
+Average speed 4.9151 MSPS, 7084951.5000, 12003546.0000, 13107200
+Average speed 5.5455 MSPS, 8067189.5000, 11996142.0000, 13107200
+Average speed 6.0970 MSPS, 8854245.0000, 12002469.0000, 13107200
 ```
