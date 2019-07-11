@@ -533,7 +533,11 @@ static uint32_t bytes_to_read = 0;
 static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 {
 	//fprintf(stderr, "airspy_callback...\n");
+	//device->received_buffer_count++;
+	static uint64_t total_len = 0;
+
 	if (ctx) {
+		total_len = total_len + len;
 		if (do_exit)
 		{
 			fprintf(stderr, "airspy_callback do_exit: true, I want to exit!\n");
@@ -590,6 +594,9 @@ static void airspy_callback(unsigned char *buf, uint32_t len, void *ctx)
 				time_start = time_now;
 				sample_count = 0;
 				buffer_count = 0;
+
+				fprintf(stderr, "Average speed %2.4f MSPS, %2.4f, %2.4f, %ld\n", (global_average_rate * 1e-6f / rate_samples), average_rate, rate, total_len);
+				total_len = 0;
 			}
 		}
 	} 
@@ -937,6 +944,7 @@ int main(int argc, char** argv)
 
 	if(serial_number == true)
 	{
+		fprintf(stderr, "airspy_open_sn start\n");
 		result = airspy_open_sn(&device, serial_number_val);
 		if( result != AIRSPY_SUCCESS ) {
 			fprintf(stderr, "airspy_open_sn() failed: %s (%d)\n", airspy_error_name(result), result);
@@ -945,6 +953,7 @@ int main(int argc, char** argv)
 		}
 	}else
 	{
+		fprintf(stderr, "airspy_open start\n");
 		result = airspy_open(&device);
 		if( result != AIRSPY_SUCCESS ) {
 			fprintf(stderr, "airspy_open() failed: %s (%d)\n", airspy_error_name(result), result);

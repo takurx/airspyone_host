@@ -344,6 +344,8 @@ static int allocate_transfers(airspy_device_t* const device)
 				return AIRSPY_ERROR_NO_MEM;
 			}
 		}
+
+		fprintf(stderr, "sample_count: %ld\n", sample_count);
 		return AIRSPY_SUCCESS;
 	}
 	else
@@ -928,6 +930,7 @@ static int airspy_open_init(airspy_device_t** device, uint64_t serial_number)
 
 	airspy_set_packing(lib_device, 0);
 
+	fprintf(stderr, "airspy_open_init, allocate_transfers\n");
 	result = allocate_transfers(lib_device);
 	if (result != 0)
 	{
@@ -1059,6 +1062,7 @@ int airspy_list_devices(uint64_t *serials, int count)
 	{
 		int result;
 
+		fprintf(stderr, "airspy_open, airspy_open_init\n");
 		result = airspy_open_init(device, serial_number);
 		return result;
 	}
@@ -1067,6 +1071,7 @@ int airspy_list_devices(uint64_t *serials, int count)
 	{
 		int result;
 
+		fprintf(stderr, "airspy_open, airspy_open_init\n");
 		result = airspy_open_init(device, SERIAL_NUMBER_UNUSED);
 		return result;
 	}
@@ -1246,6 +1251,7 @@ int airspy_list_devices(uint64_t *serials, int count)
 
 		memset(device->dropped_buffers_queue, 0, RAW_BUFFER_COUNT * sizeof(uint32_t));
 		device->dropped_buffers = 0;
+		device->received_buffer_count = 0;
 
 		result = airspy_set_receiver_mode(device, RECEIVER_MODE_OFF);
 		if (result != AIRSPY_SUCCESS)
@@ -2087,10 +2093,12 @@ static void LIBUSB_CALL _libusb_callback(struct libusb_transfer *transfers)
 		//fprintf(stderr, "LIBUSB_TRANSFER_COMPLETED...\n");
 		if (device->cb)
 		{
+			device->received_buffer_count++;
 			device->cb(transfers->buffer, transfers->actual_length, device->cb_ctx);
 		}
 		libusb_submit_transfer(transfers); /* resubmit transfer */
 		device->xfer_errors = 0;
+		device->received_buffer_count--;
 	}
 	else if (LIBUSB_TRANSFER_CANCELLED != transfers->status) 
 	{
